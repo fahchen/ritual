@@ -234,3 +234,44 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 6：`mix ritual.install.dialyzer`。dialyxir dep + mix.exs `dialyzer/0` 注入（`MixProject.update/4`）+ `.dialyzer_ignore.exs`。
+
+---
+
+## 2026-05-07 会话 1（续 5）
+
+### 阶段 6 — mix ritual.install.dialyzer
+
+**完成**
+
+- spawn elixir subagent TDD：8 新测过
+- `Mix.Tasks.Ritual.Install.Dialyzer`：dialyxir dep + `dialyzer:` 注 + `.dialyzer_ignore.exs` 写
+- 用 `Igniter.Project.MixProject.update(igniter, :project, [:dialyzer], fn nil -> {:ok, {:code, quote do [...] end}}; zipper -> {:ok, zipper} end)` 单射注入
+- `quote do ... end` 配 `unquote("priv/plts/#{plt_name}.plt")` 正解；Sourceror 自走 formatter
+- 模板 `priv/templates/dialyzer/ignore.exs` 纯文本（无 EEx）
+- 缺 `:app`（umbrella）回退 `"project"` PLT 名
+
+### codex review
+
+11 项；全 INFO/WARN，无 correctness 缺陷。改：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| 测 #7 验明 fixture 含 `ignore_warnings:` 自定义值 | WARN | fixture 加 `ignore_warnings: "config/custom_ignore.exs"`，断言占率为 1（非 0） |
+| 上游 Igniter `ensure_path!` 变量名倒置 | INFO | findings #10 录 |
+
+### 测试统计
+
+52 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/dialyzer.ex` | new |
+| `priv/templates/dialyzer/ignore.exs` | new |
+| `test/mix/tasks/ritual/install/dialyzer_test.exs` | new |
+| `findings.md` | edit（trap #10 补） |
+
+### 下一步
+
+阶段 7：`mix ritual.install.precommit`。注 `aliases :precommit` + `cli/0` `preferred_envs: [precommit: :test]`。`compile --warnings-as-errors` 是 alias 第一步（合并 v0 删的 warnings_as_errors 子任务）。

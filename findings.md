@@ -191,6 +191,7 @@ end
 7. **`Rewrite` 是 Igniter 内部细节**：`igniter.rewrite` 字段不属公共 API；`Ritual.IgniterTestHelper.file_content/2` 单点访问，文档注明，将来 Igniter 改名只需改此处。
 8. **`Igniter.Project.Deps.add_dep/3` 与 inline `defp deps, do: []` 形态不兼容**（阶段 5 实测）：当目标 mix.exs 用单行 `defp deps, do: []` 而非多行 `defp deps do [] end`，`add_dep` 会渲染出无效 Elixir。fixtures 一律用多行形 sidestep。**TODO：报上游 igniter issue**。
 9. **`Igniter.create_new_file/4` `:skip` 在 test mode 不防覆**（阶段 5 实测）：`read_source!` 测试模式下读 `:test_files` assigns，但 `Map.put_new` 检 `igniter.rewrite.sources` — 测试 fixture 文件入 assigns 不入 sources，故 put_new 仍写。正解用 `Igniter.include_or_create_file/3`：read_source! 同走 test_files，但用 `Rewrite.put!` 入 sources，幂等正确。
+10. **`Igniter.Project.MixProject.ensure_path!/1` 变量名倒置**（阶段 6 codex review 发现）：`deps/igniter/lib/igniter/project/mix_project.ex:281` 处 `non_empty? = Enum.empty?(path)` 实为 is_empty 检查。守卫 `if non_empty? or not all_atoms?` 行为正确（空路径 raise）但名义反语义。纯可读性瑕疵不影响行为。**TODO：附上游 PR 时一并清理**。
 
 ## Igniter 测试 API（阶段 1 实测可用）
 

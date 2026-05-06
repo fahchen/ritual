@@ -118,7 +118,7 @@ plan → red(test) → green(impl) → refactor → codex review → fix → com
 | 3  | `Ritual.Detect`：umbrella/phoenix/hex 检测       | complete | yes   | `feat: add project shape detection` |
 | 4  | `mix ritual.install.format`                      | complete | yes   | `feat: add format installer` |
 | 5  | `mix ritual.install.credo`                       | complete | yes   | `feat: add credo installer` |
-| 6  | `mix ritual.install.dialyzer`                    | pending  | yes   | `feat: add dialyzer installer` |
+| 6  | `mix ritual.install.dialyzer`                    | complete | yes   | `feat: add dialyzer installer` |
 | 7  | `mix ritual.install.precommit`                   | pending  | yes   | `feat: add precommit installer` |
 | 8  | `mix ritual.install.toolchain`（mise 默认）      | pending  | yes   | `feat: add toolchain installer (mise default)` |
 | 9  | `mix ritual.install.ci`（mise + setup-beam 自动选）| pending | yes   | `feat: add ci installer` |
