@@ -105,3 +105,43 @@ rescue agent 审（codex runtime 不可用）。actionable 五项，已全部应
 ### 下一步
 
 阶段 3：`Ritual.Detect` 模块（umbrella?/phoenix?/hex_package? 检测）。TDD：先写 detect 测试，再实现。后续阶段 4-11 各子任务依此构建。
+
+---
+
+## 2026-05-07 会话 1（续 2）
+
+### 阶段 3 — Ritual.Detect
+
+**完成**
+
+- spawn elixir subagent TDD：red → green → refactor，14 测过
+- 公共 API：`umbrella?/1`、`phoenix?/1`、`phoenix_live_view?/1`、`hex_package?/1`、`app_name/1`
+- 实现：
+  - `umbrella?` / `app_name` 走 `Igniter.Code.Function.move_to_def(:project, 0)` + `Common.rightmost/1` + `IKeyword.get_key/2`
+  - `phoenix?` / `phoenix_live_view?` 用 `Igniter.Project.Deps.has_dep?/2`
+  - `hex_package?` 检 `def package/0` 或 `defp package/0`
+- 自实 `mix_zipper/1` 走 `Rewrite.source/2` + `Rewrite.Source.get(:quoted)`（已注 Igniter 内部 API）
+
+### codex review
+
+rescue agent 审（codex runtime 仍不可用）。三 actionable：
+1. **Point 4**：`app_name/1` 改 `{:ok, atom} | :error`（无现有 caller，零迁移成本）— 已应用
+2. **Point 1**：`do:` shorthand 限制 — **codex 误判**！实测 Igniter `move_to_def` 已正确处理 `do:` shorthand。改写为正向支持测试
+3. **Point 6**：调用者若 igniter 已 queue mix.exs 写入，detect 读旧 AST — moduledoc 加警示
+
+补测：phoenix+phoenix_live_view 共存、umbrella 含 :app、`def package(opts \\\\ [])` 假阳性、`def project, do:` shorthand 正确处理。
+
+### 测试统计
+
+18 tests, 0 failures。compile/format 全绿。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/ritual/detect.ex` | new |
+| `test/ritual/detect_test.exs` | new |
+
+### 下一步
+
+阶段 4：`mix ritual.install.format`。TDD 实现 formatter 安装器，按 umbrella/phoenix/hex 形态分支。
