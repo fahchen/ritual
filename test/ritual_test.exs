@@ -1,8 +1,5 @@
 defmodule RitualTest do
-  use ExUnit.Case
-  doctest Ritual
+  use ExUnit.Case, async: true
 
-  test "greets the world" do
-    assert Ritual.hello() == :world
-  end
+  # Real tests are added alongside each installer task in later phases.
 end
