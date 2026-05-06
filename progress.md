@@ -145,3 +145,45 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 4：`mix ritual.install.format`。TDD 实现 formatter 安装器，按 umbrella/phoenix/hex 形态分支。
+
+---
+
+## 2026-05-07 会话 1（续 3）
+
+### 阶段 4 — mix ritual.install.format
+
+**完成**
+
+- spawn elixir subagent TDD：12 新测过
+- `Mix.Tasks.Ritual.Install.Format` 薄壳 + `Ritual.Formatter` 共享模块
+- 形态分支：plain / phoenix / umbrella / phoenix+umbrella；hex 包出 notice 不自动注 export
+- 用 Igniter helpers：`Igniter.Project.Formatter.import_dep/2`、`add_formatter_plugin/2`、`Igniter.include_or_create_file/3`、`Igniter.update_elixir_file/3`
+- 自实 `replace_default_keyword/4`、`ensure_keyword/3` 私 helper
+
+### codex review（rescue agent）
+
+11 项；其中 1 major、4 minor 已修，余为 nit：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| `Zipper.replace(existing, value)` 缺 AST 规范化 | major | 改 `Common.replace_code/2` |
+| 无条件 export 空骨架 = overreach | major | 删 `apply_hex_package/1`；改为 hex 包出 `Igniter.add_notice` |
+| `@phoenix_import_deps` 顺序与 prepend 冲突 → 反字母序 | minor | 倒序为 `[:phoenix, :ecto_sql, :ecto]`，prepend 后字母序 |
+| `apply_umbrella` 无条件覆 `inputs:` | minor | 改 `replace_default_keyword/4`：仅当现值等于默认 Mix-生成值才覆 |
+| 缺测：malformed top、import_deps order、triple combo | minor | 三测皆补 |
+
+### 测试统计
+
+34 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/format.ex` | new |
+| `lib/ritual/formatter.ex` | new |
+| `test/mix/tasks/ritual/install/format_test.exs` | new |
+
+### 下一步
+
+阶段 5：`mix ritual.install.credo`。dep 注入 + `.credo.exs` 模板（default vs umbrella）+ EEx 渲染走 priv/templates。
