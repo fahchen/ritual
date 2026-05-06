@@ -187,3 +187,50 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 5：`mix ritual.install.credo`。dep 注入 + `.credo.exs` 模板（default vs umbrella）+ EEx 渲染走 priv/templates。
+
+---
+
+## 2026-05-07 会话 1（续 4）
+
+### 阶段 5 — mix ritual.install.credo
+
+**完成**
+
+- spawn elixir subagent TDD：9 新测过
+- `Mix.Tasks.Ritual.Install.Credo`：dep 加 `{:credo, "~> 1.7", only: [:dev, :test], runtime: false}` + `.credo.exs` 写
+- 两 EEx 模板：`priv/templates/credo/default.credo.exs.eex`（138 行）+ `umbrella.credo.exs.eex`（141 行）
+- 模板取三参考项目共同子集；预留 EEx 接口供未来 flag
+
+### codex review
+
+11 项；major 2、minor 多。修：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| umbrella 模板缺 `web/` + `apps/*/web/` | major | 补入 `files.included` |
+| 上游 Igniter `defp deps, do: []` inline 形态 add_dep 渲染错 | major | findings #8 记；fixture 用多行形 sidestep；TODO 报 issue |
+| 用 `include_existing_file` + `has_source?` 三步 gate 别扭 | minor | 改用 `Igniter.include_or_create_file/3`（一步搞定，test mode 也对） |
+| `StrictModuleLayout`/`SeparateAliasRequire`/`ABCSize`/`ModuleDependencies` 缺 disabled | minor | 两模板皆补入 disabled（mirror grephql） |
+| `@credo_dep` 多余括号 | nit | 去之 |
+| 缺 umbrella 语法测试 | minor | 补 `Code.eval_string` 测试 |
+| 缺 corrupt-file 文档 | minor | moduledoc 加注 |
+
+实测 trap：codex 推 `create_new_file/4 :skip` 但 test mode 不工作（findings #9）；改用 `include_or_create_file/3` 正解。
+
+### 测试统计
+
+44 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/credo.ex` | new |
+| `priv/templates/credo/default.credo.exs.eex` | new |
+| `priv/templates/credo/umbrella.credo.exs.eex` | new |
+| `test/mix/tasks/ritual/install/credo_test.exs` | new |
+| `findings.md` | edit（trap #8、#9 补） |
+
+### 下一步
+
+阶段 6：`mix ritual.install.dialyzer`。dialyxir dep + mix.exs `dialyzer/0` 注入（`MixProject.update/4`）+ `.dialyzer_ignore.exs`。

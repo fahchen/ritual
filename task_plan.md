@@ -117,7 +117,7 @@ plan → red(test) → green(impl) → refactor → codex review → fix → com
 | 2  | ~~`cli/0` 注入 spike~~（**取消**：`MixProject.update/4` 原生支持，见 findings #1）| skip | n/a | — |
 | 3  | `Ritual.Detect`：umbrella/phoenix/hex 检测       | complete | yes   | `feat: add project shape detection` |
 | 4  | `mix ritual.install.format`                      | complete | yes   | `feat: add format installer` |
-| 5  | `mix ritual.install.credo`                       | pending  | yes   | `feat: add credo installer` |
+| 5  | `mix ritual.install.credo`                       | complete | yes   | `feat: add credo installer` |
 | 6  | `mix ritual.install.dialyzer`                    | pending  | yes   | `feat: add dialyzer installer` |
 | 7  | `mix ritual.install.precommit`                   | pending  | yes   | `feat: add precommit installer` |
 | 8  | `mix ritual.install.toolchain`（mise 默认）      | pending  | yes   | `feat: add toolchain installer (mise default)` |
