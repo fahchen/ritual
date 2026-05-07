@@ -193,6 +193,7 @@ end
 9. **`Igniter.create_new_file/4` `:skip` 在 test mode 不防覆**（阶段 5 实测）：`read_source!` 测试模式下读 `:test_files` assigns，但 `Map.put_new` 检 `igniter.rewrite.sources` — 测试 fixture 文件入 assigns 不入 sources，故 put_new 仍写。正解用 `Igniter.include_or_create_file/3`：read_source! 同走 test_files，但用 `Rewrite.put!` 入 sources，幂等正确。
 10. **`Igniter.Project.MixProject.ensure_path!/1` 变量名倒置**（阶段 6 codex review 发现）：`deps/igniter/lib/igniter/project/mix_project.ex:281` 处 `non_empty? = Enum.empty?(path)` 实为 is_empty 检查。守卫 `if non_empty? or not all_atoms?` 行为正确（空路径 raise）但名义反语义。纯可读性瑕疵不影响行为。**TODO：附上游 PR 时一并清理**。
 11. **`Igniter.include_or_create_file/3` create 分支硬编码 `Rewrite.Source.Ex.from_string`**（阶段 8 实测）：`deps/igniter/lib/igniter.ex:728-732` rescue 分支建源时忽略 `source_handler/2` 解析的 handler，固走 Elixir parser。非 Elixir 文件（`.tool-versions`、`Dockerfile`、YAML 等）走此创建分支会触 `Sourceror.SyntaxError`。`mise.toml` 因 TOML/Elixir 语法巧合可过，但 `[env] FOO = "bar"` 等扩展即破。**正解**：仿写 `include_or_create_plain_file/3`：先 `include_existing_file/2`（其 `source_handler/2` 正确），未存则用 `Rewrite.Source.from_string` + `Rewrite.put!`。**TODO：报上游 igniter issue**。
+12. **`Igniter.compose_task` 运行时容忍未知 flag**（阶段 11 实测）：docstring 警示「未列 `:composes` 则未知 flag 报错」仅适于 install-time 路径（`Mix.Tasks.Igniter.Install` 的 `validate!/3`）。runtime `compose_task` 链中，sub-task 走 `Igniter.Mix.Task.__options__!/2` → `OptionParser.parse!(:switches)`（非 `:strict`），未知 flag 静默落入 leftovers 不 raise。聚合器把全 `argv_flags` 一锅传所有 sub-tasks 是安全的；聚合器 `:schema` 仍需声明用户面 flag 以使其自身解析通过。
 
 ## Igniter 测试 API（阶段 1 实测可用）
 

@@ -437,3 +437,42 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 11：`mix ritual.install` 顶层聚合。compose 8 子任务（format/credo/dialyzer/precommit/toolchain/ci/publish），按形态选执。format 必含；publish 仅 hex 包。
+
+---
+
+## 2026-05-07 会话 1（续 10）
+
+### 阶段 11 — mix ritual.install 顶层聚合
+
+**完成**
+
+- spawn elixir subagent TDD：9 新测过
+- `Mix.Tasks.Ritual.Install`：7 步 `Igniter.compose_task` pipe（format → toolchain → credo → dialyzer → precommit → ci → publish）
+- `--tool-versions` flag 通过 `argv_flags` 自动 fan-out 至所有 sub-tasks（unknown flag 静默忽略）
+- `:composes` 列出 7 子任务
+
+### codex review
+
+10 项；1 minor（moduledoc 文档不全）修：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| moduledoc 漏 credo→precommit 序约束 | MEDIUM | 改三处约束（toolchain→ci、credo→precommit、dialyzer→precommit）|
+| `compose_task` runtime 容忍未知 flag | INFO | findings #12 录 |
+| umbrella/phoenix end-to-end 测缺 | LOW | 各阶段单独覆盖；v0 不补 |
+
+### 测试统计
+
+100 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install.ex` | new |
+| `test/mix/tasks/ritual/install_test.exs` | new |
+| `findings.md` | edit（trap #12 补） |
+
+### 下一步
+
+阶段 12：README + moduledocs。最后一阶段：补主 README、Ritual 模块 moduledoc，可能加示例输出。
