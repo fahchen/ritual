@@ -399,3 +399,41 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 10：`mix ritual.install.publish`。`.github/workflows/publish.yml` for hex 包（仅 `Detect.hex_package?` 触发）。
+
+---
+
+## 2026-05-07 会话 1（续 9）
+
+### 阶段 10 — mix ritual.install.publish
+
+**完成**
+
+- spawn elixir subagent TDD：5 新测过
+- `Mix.Tasks.Ritual.Install.Publish`：仅 hex 包触发；非 hex 出 notice
+- `Ritual.Ci.publish_workflow/0` 加；workflow 内联 setup-beam 自包含（避免 hex CI 不装 composite action 的鸡蛋问题）
+
+### codex review
+
+10 项；major 1（`--replace` 破坏性默认）+ minor 2 修：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| `mix hex.publish --yes --replace` 默认覆 | **MAJOR** | 删 `--replace`；测 refute 之；comment 说明 |
+| `1.19.5/28.3` 重复于 setup-beam 与 publish | minor | 抽 `@lint_elixir`/`@lint_otp` 模块属性，`~s` 内插 |
+| publish workflow 缺 `MIX_ENV: prod` | minor | 加 job 级 env |
+
+### 测试统计
+
+91 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/publish.ex` | new |
+| `lib/ritual/ci.ex` | edit（加 `@lint_*`、`@publish`、`publish_workflow/0`；setup-beam 改 `~s` 内插） |
+| `test/mix/tasks/ritual/install/publish_test.exs` | new |
+
+### 下一步
+
+阶段 11：`mix ritual.install` 顶层聚合。compose 8 子任务（format/credo/dialyzer/precommit/toolchain/ci/publish），按形态选执。format 必含；publish 仅 hex 包。
