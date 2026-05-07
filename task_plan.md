@@ -121,7 +121,7 @@ plan → red(test) → green(impl) → refactor → codex review → fix → com
 | 6  | `mix ritual.install.dialyzer`                    | complete | yes   | `feat: add dialyzer installer` |
 | 7  | `mix ritual.install.precommit`                   | complete | yes   | `feat: add precommit installer` |
 | 8  | `mix ritual.install.toolchain`（mise 默认）      | complete | yes   | `feat: add toolchain installer (mise default)` |
-| 9  | `mix ritual.install.ci`（mise + setup-beam 自动选）| pending | yes   | `feat: add ci installer` |
+| 9  | `mix ritual.install.ci`（mise + setup-beam 自动选）| complete | yes   | `feat: add ci installer` |
 | 10 | `mix ritual.install.publish`                     | pending  | yes   | `feat: add publish installer` |
 | 11 | `mix ritual.install` 顶层聚合                    | pending  | yes   | `feat: add top-level install task` |
 | 12 | README + moduledoc                               | pending  | n/a   | `docs: add README and module docs` |

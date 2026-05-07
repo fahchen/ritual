@@ -356,3 +356,46 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 9：`mix ritual.install.ci`。GitHub Actions workflow + composite setup action。默认 mise 单 job；hex 包检测自动切 setup-beam 矩阵。
+
+---
+
+## 2026-05-07 会话 1（续 8）
+
+### 阶段 9 — mix ritual.install.ci
+
+**完成**
+
+- spawn elixir subagent TDD：8 新测过
+- `Mix.Tasks.Ritual.Install.Ci`：薄壳 + `Ritual.Ci`（三 YAML body 模块属性，`~S` 防内插）
+- `Ritual.IgniterCompat` 公模块：hoist `include_or_create_plain_file/3`；toolchain 也 import
+- 形态自动选：`Detect.hex_package?` → setup-beam 矩阵；否则 mise 单 job + composite setup action
+- 矩阵 v0：`1.19.5/28.3` (lint), `1.18.4/27.2`, `1.17.3/27.2`
+
+### codex review
+
+10 项；3 actionable WARN 修：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| ~~`1.19.5` 不存在~~ | ~~blocker~~ | **codex 误判**（训练数据截止）：实测 `elixir --version` 即 1.19.5 OTP 28，正解 |
+| `mise_setup_action` 仅读 `.tool-versions`，mise.toml 项目破 | WARN | 加 `if -f .tool-versions ... else mise current` 回退 |
+| setup-beam 缺 Create PLTs 暖缓步 | WARN | 加 `mix dialyzer --plt` step gated on cache miss |
+| hex 幂等测仅捕 `ci.yml`，未守 setup_action 缺席 | WARN | 加 `hex_snapshot/1` helper，含 `Map.has_key?` 检 |
+
+### 测试统计
+
+86 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/ci.ex` | new |
+| `lib/ritual/ci.ex` | new |
+| `lib/ritual/igniter_compat.ex` | new |
+| `lib/mix/tasks/ritual/install/toolchain.ex` | edit（import IgniterCompat） |
+| `test/mix/tasks/ritual/install/ci_test.exs` | new |
+
+### 下一步
+
+阶段 10：`mix ritual.install.publish`。`.github/workflows/publish.yml` for hex 包（仅 `Detect.hex_package?` 触发）。
