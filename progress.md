@@ -316,3 +316,43 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 8：`mix ritual.install.toolchain`。`mise.toml` 默认；`--tool-versions` flag 切 asdf 兼容格式。检测当前 elixir/erlang 版本注入。
+
+---
+
+## 2026-05-07 会话 1（续 7）
+
+### 阶段 8 — mix ritual.install.toolchain
+
+**完成**
+
+- spawn elixir subagent TDD：13 新测过（4 unit + 9 task）
+- `Mix.Tasks.Ritual.Install.Toolchain`：默认 `mise.toml`；`--tool-versions` flag 切 `.tool-versions`
+- `Ritual.Toolchain` helper：`current_elixir_version/0`（`System.version` + `-otp-<major>` 后缀）、`current_erlang_version/0`（读 `OTP_VERSION` 文件，回退 OTP major）、`mise_toml/0`、`tool_versions/0`
+- 实测发现：`Igniter.include_or_create_file/3` create 分支硬编码 `Ex.from_string`，非 Elixir 文件破。自实 `include_or_create_plain_file/3` sidestep（findings #11）
+
+### codex review
+
+10 项；ready to commit。改 1 UX：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| 双 file 共存无警示 | WARN | 写入后检对面格式文件存在则 `Igniter.add_notice` 提醒 |
+| 上游 `include_or_create_file` 创建分支 hardcoded | INFO | findings #11 录 |
+
+### 测试统计
+
+78 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/toolchain.ex` | new |
+| `lib/ritual/toolchain.ex` | new |
+| `test/ritual/toolchain_test.exs` | new |
+| `test/mix/tasks/ritual/install/toolchain_test.exs` | new |
+| `findings.md` | edit（trap #11 补） |
+
+### 下一步
+
+阶段 9：`mix ritual.install.ci`。GitHub Actions workflow + composite setup action。默认 mise 单 job；hex 包检测自动切 setup-beam 矩阵。
