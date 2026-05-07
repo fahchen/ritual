@@ -88,10 +88,16 @@ defmodule Ritual.Detect do
     end
   end
 
-  # --- internal helpers ---
+  @doc """
+  Returns `{:ok, zipper}` at the top of `mix.exs` (after including it in the
+  rewrite), or `:error` when the file is unreadable.
 
-  # Returns a zipper at the top of mix.exs (after including it in the rewrite).
-  defp mix_zipper(igniter) do
+  Public so other Ritual installers can build their own AST navigations on
+  top without re-implementing the include-and-zip dance. Reaches into
+  `igniter.rewrite` (Igniter implementation detail) — see moduledoc caveats.
+  """
+  @spec mix_zipper(Igniter.t()) :: {:ok, Sourceror.Zipper.t()} | :error
+  def mix_zipper(igniter) do
     igniter = Igniter.include_existing_file(igniter, "mix.exs")
 
     case Rewrite.source(igniter.rewrite, "mix.exs") do
@@ -105,6 +111,8 @@ defmodule Ritual.Detect do
         :error
     end
   end
+
+  # --- internal helpers ---
 
   # Navigates to the keyword list returned by `project/0`.
   defp project_keyword_zipper(igniter) do
