@@ -30,7 +30,14 @@ end
 
 ## Usage
 
-Run everything in one shot:
+Pick what to install interactively:
+
+```bash
+mix ritual.bootstrap        # prompts Install X? [Y/n] for each sub-task
+mix ritual.bootstrap --yes  # skip prompts, compose every sub-task
+```
+
+Or run everything in one shot non-interactively (CI / automation):
 
 ```bash
 mix ritual.install
