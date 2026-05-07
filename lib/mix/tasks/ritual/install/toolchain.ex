@@ -35,6 +35,8 @@ defmodule Mix.Tasks.Ritual.Install.Toolchain do
 
   use Igniter.Mix.Task
 
+  import Ritual.IgniterCompat, only: [include_or_create_plain_file: 3]
+
   alias Ritual.Toolchain
 
   @impl Igniter.Mix.Task
@@ -72,35 +74,6 @@ defmodule Mix.Tasks.Ritual.Install.Toolchain do
       """)
     else
       igniter
-    end
-  end
-
-  # Variant of `Igniter.include_or_create_file/3` that does not assume the
-  # file is Elixir source. Igniter's helper hardcodes
-  # `Rewrite.Source.Ex.from_string/2` in its create branch — when the
-  # rendered content is not parseable Elixir (e.g. `erlang 28.3` in
-  # `.tool-versions`), Sourceror raises a `SyntaxError` from inside Igniter.
-  # `mise.toml` happens to be parseable as Elixir today (`[tools]` is a list
-  # literal, and `key = "value"` is a `Kernel.=/2` call) but that is an
-  # accident of TOML's syntax overlap; we treat both formats uniformly here.
-  #
-  # The flow mirrors the upstream helper:
-  #
-  #   1. Pull any existing source into `igniter.rewrite` via
-  #      `include_existing_file/2`, which uses `source_handler/2` and so
-  #      picks the generic `Rewrite.Source` for files without an `.ex`/`.exs`
-  #      extension. In test mode, this reads from `:test_files` assigns.
-  #   2. If a source now exists for `path`, the file pre-existed — preserve.
-  #   3. Otherwise, build a generic source with our rendered content and put
-  #      it on the rewrite directly.
-  defp include_or_create_plain_file(igniter, path, contents) do
-    igniter = Igniter.include_existing_file(igniter, path)
-
-    if Rewrite.has_source?(igniter.rewrite, path) do
-      igniter
-    else
-      source = Rewrite.Source.from_string(contents, path: path)
-      %{igniter | rewrite: Rewrite.put!(igniter.rewrite, source)}
     end
   end
 end
