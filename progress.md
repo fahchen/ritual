@@ -275,3 +275,44 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 7：`mix ritual.install.precommit`。注 `aliases :precommit` + `cli/0` `preferred_envs: [precommit: :test]`。`compile --warnings-as-errors` 是 alias 第一步（合并 v0 删的 warnings_as_errors 子任务）。
+
+---
+
+## 2026-05-07 会话 1（续 6）
+
+### 阶段 7 — mix ritual.install.precommit
+
+**完成**
+
+- spawn elixir subagent TDD：12 新测过
+- `Mix.Tasks.Ritual.Install.Precommit`：alias + `cli/0` `preferred_envs` 双注
+- 智能跳：`credo --strict` 仅当 `:credo` dep 存在；`dialyzer` 仅当 `:dialyxir` 存在
+- alias `if_exists: :ignore`：保留用户 alias；存在则出 notice 示范
+- `cli/0` 用 `MixProject.update(:cli, [:preferred_envs, :precommit], _)` 自动建/合并
+
+### codex review
+
+11 项；3 minor 修：
+
+| 项 | 严重 | 改 |
+|----|------|---|
+| `aliases_zipper/1` 不跟 `aliases: aliases()` 间接形 | minor | moduledoc caveats 注 |
+| `has_dep?` 仅看根 mix.exs，umbrella 子 app 不见 | minor | moduledoc caveats 注 |
+| `mix_zipper` 与 `Detect` 重复 | minor | `Ritual.Detect.mix_zipper/1` 公开化，precommit 复用 |
+| 缺 empty `aliases/0` 测 | minor | 补 `project_with_empty_aliases` fixture + 测 |
+
+### 测试统计
+
+65 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `lib/mix/tasks/ritual/install/precommit.ex` | new |
+| `test/mix/tasks/ritual/install/precommit_test.exs` | new |
+| `lib/ritual/detect.ex` | edit（`mix_zipper/1` 公开化） |
+
+### 下一步
+
+阶段 8：`mix ritual.install.toolchain`。`mise.toml` 默认；`--tool-versions` flag 切 asdf 兼容格式。检测当前 elixir/erlang 版本注入。
