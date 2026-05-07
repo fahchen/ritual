@@ -476,3 +476,32 @@ rescue agent 审（codex runtime 仍不可用）。三 actionable：
 ### 下一步
 
 阶段 12：README + moduledocs。最后一阶段：补主 README、Ritual 模块 moduledoc，可能加示例输出。
+
+---
+
+## 2026-05-07 会话 1（续 11）
+
+### 阶段 12 — README + moduledocs
+
+**完成**
+
+- `README.md` 重写：装/用/形态检测表/序约束/幂等/明确不做项/参考来源/许可
+- `lib/ritual.ex` `@moduledoc` 扩：sub-installer 列表 + Detect 谓词索引
+
+### 测试统计
+
+100 tests, 0 failures。
+
+### 创建/修改文件
+
+| 文件 | 类型 |
+|------|------|
+| `README.md` | edit（占位 → 实质）|
+| `lib/ritual.ex` | edit（moduledoc 扩）|
+
+### **全部阶段毕**
+
+总 commit 数：约 23（每阶段 2-3 commit：feat + docs，部分含 refactor）。
+总测试数：100，全绿。
+8 子任务 + 1 顶层聚合，全 TDD + codex review + 小逻辑 commit。
+findings 录 12 条 Igniter 实测陷阱（含 4 条上游 issue 候选）。

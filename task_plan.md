@@ -124,7 +124,7 @@ plan → red(test) → green(impl) → refactor → codex review → fix → com
 | 9  | `mix ritual.install.ci`（mise + setup-beam 自动选）| complete | yes   | `feat: add ci installer` |
 | 10 | `mix ritual.install.publish`                     | complete | yes   | `feat: add publish installer` |
 | 11 | `mix ritual.install` 顶层聚合                    | complete | yes   | `feat: add top-level install task` |
-| 12 | README + moduledoc                               | pending  | n/a   | `docs: add README and module docs` |
+| 12 | README + moduledoc                               | complete | n/a   | `docs: add README and module docs` |
 
 阶段 1-2 提前以**去险**：cli/0 注入是 Igniter 已知陷阱（findings #1）；先确认 API 路径，再展开后续阶段。
 
