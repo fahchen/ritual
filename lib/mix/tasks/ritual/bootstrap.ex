@@ -118,7 +118,7 @@ defmodule Mix.Tasks.Ritual.Bootstrap do
       true ->
         # `Mix.shell().yes?/2`'s `:default` option flips which letter is
         # capitalised in the prompt and which answer Enter selects.
-        Mix.shell().yes?(prompt, default: if(default, do: :default_yes, else: :default_no))
+        Mix.shell().yes?(prompt, default: if(default, do: :yes, else: :no))
     end
   end
 
