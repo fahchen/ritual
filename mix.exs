@@ -1,15 +1,22 @@
 defmodule Ritual.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/fahchen/ritual"
+  @version "0.1.0"
+
   def project do
     [
       app: :ritual,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      name: "Ritual",
       description: description(),
       package: package(),
+      source_url: @source_url,
+      homepage_url: @source_url,
+      docs: docs(),
       deps: deps()
     ]
   end
@@ -31,13 +38,24 @@ defmodule Ritual.MixProject do
   defp package do
     [
       licenses: ["MIT"],
-      links: %{}
+      maintainers: ["Phil Chen"],
+      links: %{"GitHub" => @source_url},
+      files: ~w(lib priv mix.exs README.md LICENSE)
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      source_ref: "v#{@version}",
+      extras: ["README.md"]
     ]
   end
 
   defp deps do
     [
-      {:igniter, "~> 0.7", runtime: false}
+      {:igniter, "~> 0.7", runtime: false},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end
 end

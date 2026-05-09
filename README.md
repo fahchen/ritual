@@ -23,7 +23,7 @@ Add to your `mix.exs` and run `mix deps.get`:
 ```elixir
 def deps do
   [
-    {:ritual, "~> 0.1", only: [:dev], runtime: false}
+    {:ritual, github: "fahchen/ritual", only: [:dev], runtime: false}
   ]
 end
 ```
