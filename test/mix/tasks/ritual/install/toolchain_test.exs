@@ -110,6 +110,39 @@ defmodule Mix.Tasks.Ritual.Install.ToolchainTest do
     end
   end
 
+  describe "--force flag" do
+    test "overwrites an existing `mise.toml` with the freshly rendered content" do
+      sentinel = "# stale custom mise.toml\n[tools]\nerlang = \"26.0\"\n"
+
+      igniter =
+        test_project(files: %{"mise.toml" => sentinel})
+        |> with_force_flag()
+        |> ToolchainTask.igniter()
+
+      content = file_content(igniter, "mise.toml")
+
+      refute content == sentinel
+      assert content =~ ~s|erlang = "#{Toolchain.current_erlang_version()}"|
+      assert content =~ ~s|elixir = "#{Toolchain.current_elixir_version()}"|
+    end
+
+    test "overwrites an existing `.tool-versions` when paired with --tool-versions" do
+      sentinel = "erlang 26.0\nelixir 1.16.0-otp-26\n"
+
+      igniter =
+        test_project(files: %{".tool-versions" => sentinel})
+        |> with_tool_versions_flag()
+        |> with_force_flag()
+        |> ToolchainTask.igniter()
+
+      content = file_content(igniter, ".tool-versions")
+
+      refute content == sentinel
+      assert content =~ "erlang #{Toolchain.current_erlang_version()}"
+      assert content =~ "elixir #{Toolchain.current_elixir_version()}"
+    end
+  end
+
   # Pre-populates the `--tool-versions` flag in `igniter.args.options`. When
   # the task is invoked directly (as opposed to via `Mix.Task.run/2` or
   # `Igniter.compose_task/3`), no argv parsing happens, so flags must be

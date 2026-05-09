@@ -80,8 +80,8 @@ defmodule Mix.Tasks.Ritual.Install.Precommit do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.precommit",
-      schema: [],
-      defaults: [],
+      schema: [force: :boolean],
+      defaults: [force: false],
       composes: []
     }
   end
@@ -91,33 +91,73 @@ defmodule Mix.Tasks.Ritual.Install.Precommit do
     # Capture pre-existence of the alias *before* we mutate `mix.exs`. Igniter's
     # `add_alias/3` with `if_exists: :ignore` returns the same igniter regardless
     # of whether it modified the AST, so we can't infer presence after the fact.
-    notice? = needs_canonical_notice?(igniter)
+    {action, notice?} = decide_alias_action(igniter)
 
     igniter
-    |> add_precommit_alias()
+    |> apply_alias_action(action)
     |> set_preferred_env()
     |> maybe_notice(notice?, @canonical_alias_notice)
   end
 
-  # Notice fires only when an existing alias diverges from the canonical
-  # shape. If the alias already matches what we would write, suppress the
-  # reminder — re-runs of an already-Ritualised project should stay quiet.
-  defp needs_canonical_notice?(igniter) do
+  # The alias action and the canonical-mismatch notice fall out of the same
+  # decision matrix:
+  #
+  #   * `:absent`           -> create fresh, no notice.
+  #   * `:canonical`        -> existing alias matches; no-op, no notice.
+  #   * `:divergent`        -> existing alias differs; prompt to overwrite.
+  #     - prompt accepted   -> replace value, no notice.
+  #     - prompt rejected   -> keep existing + emit canonical notice.
+  #   * `:opaque`           -> existing alias is non-literal (function call,
+  #                            variable, ...); prompt as for `:divergent`.
+  defp decide_alias_action(igniter) do
     case existing_precommit_steps(igniter) do
-      :absent -> false
-      {:ok, steps} -> steps != canonical_steps(igniter)
-      :error -> true
+      :absent ->
+        {:create, false}
+
+      {:ok, steps} ->
+        if steps == canonical_steps(igniter) do
+          {:noop, false}
+        else
+          if Ritual.Overwrite.prompt?(igniter, "precommit alias") do
+            {:replace, false}
+          else
+            {:noop, true}
+          end
+        end
+
+      :error ->
+        if Ritual.Overwrite.prompt?(igniter, "precommit alias") do
+          {:replace, false}
+        else
+          {:noop, true}
+        end
     end
   end
 
-  defp add_precommit_alias(igniter) do
-    steps = canonical_steps(igniter)
+  defp apply_alias_action(igniter, :noop), do: igniter
 
-    # `:if_exists` defaults to `:ignore` — that's exactly the desired
-    # semantic: a hand-tuned alias survives verbatim. We pair this with the
-    # notice path above so users still learn what the canonical alias looks
-    # like.
+  defp apply_alias_action(igniter, :create) do
+    steps = canonical_steps(igniter)
+    # `:if_exists` defaults to `:ignore` — safe even though we only call this
+    # branch when no alias exists; idempotent if we've miscategorised.
     Igniter.Project.TaskAliases.add_alias(igniter, :precommit, steps, if_exists: :ignore)
+  end
+
+  defp apply_alias_action(igniter, :replace) do
+    steps = canonical_steps(igniter)
+    new_value = canonical_value_ast(steps)
+
+    Igniter.Project.TaskAliases.modify_existing_alias(igniter, :precommit, fn zipper ->
+      {:ok, Igniter.Code.Common.replace_code(zipper, new_value)}
+    end)
+  end
+
+  # Builds the AST for the alias value (the right-hand side of `precommit:`).
+  # `Sourceror`-friendly literal so `replace_code/2` writes idiomatic Elixir.
+  defp canonical_value_ast(steps) do
+    quote do
+      unquote(steps)
+    end
   end
 
   defp set_preferred_env(igniter) do

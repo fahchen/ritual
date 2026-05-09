@@ -35,7 +35,7 @@ defmodule Mix.Tasks.Ritual.Install.Toolchain do
 
   use Igniter.Mix.Task
 
-  import Ritual.IgniterCompat, only: [include_or_create_plain_file: 3]
+  import Ritual.IgniterCompat, only: [write_or_create_plain_file: 4]
 
   alias Ritual.Toolchain
 
@@ -44,8 +44,8 @@ defmodule Mix.Tasks.Ritual.Install.Toolchain do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.toolchain",
-      schema: [tool_versions: :boolean],
-      defaults: [tool_versions: false],
+      schema: [tool_versions: :boolean, force: :boolean],
+      defaults: [tool_versions: false, force: false],
       composes: []
     }
   end
@@ -54,11 +54,11 @@ defmodule Mix.Tasks.Ritual.Install.Toolchain do
   def igniter(igniter) do
     if igniter.args.options[:tool_versions] do
       igniter
-      |> include_or_create_plain_file(".tool-versions", Toolchain.tool_versions())
+      |> write_or_create_plain_file(".tool-versions", Toolchain.tool_versions(), ".tool-versions")
       |> maybe_dual_format_notice(".tool-versions", "mise.toml")
     else
       igniter
-      |> include_or_create_plain_file("mise.toml", Toolchain.mise_toml())
+      |> write_or_create_plain_file("mise.toml", Toolchain.mise_toml(), "mise.toml")
       |> maybe_dual_format_notice("mise.toml", ".tool-versions")
     end
   end

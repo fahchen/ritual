@@ -65,8 +65,8 @@ defmodule Mix.Tasks.Ritual.Bootstrap do
       # verbatim through `compose_task` (which passes `argv_flags` to each
       # sub-task) — declared here so the aggregator's OptionParser run does
       # not reject it.
-      schema: [yes: :boolean, tool_versions: :boolean],
-      defaults: [yes: false, tool_versions: false],
+      schema: [yes: :boolean, tool_versions: :boolean, force: :boolean],
+      defaults: [yes: false, tool_versions: false, force: false],
       composes: Enum.map(@subtasks, fn {task, _prompt} -> task end)
     }
   end

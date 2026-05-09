@@ -34,7 +34,7 @@ defmodule Mix.Tasks.Ritual.Install.Ci do
 
   use Igniter.Mix.Task
 
-  import Ritual.IgniterCompat, only: [include_or_create_plain_file: 3]
+  import Ritual.IgniterCompat, only: [write_or_create_plain_file: 4]
 
   alias Ritual.Ci
   alias Ritual.Detect
@@ -47,8 +47,8 @@ defmodule Mix.Tasks.Ritual.Install.Ci do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.ci",
-      schema: [],
-      defaults: [],
+      schema: [force: :boolean],
+      defaults: [force: false],
       composes: []
     }
   end
@@ -64,11 +64,11 @@ defmodule Mix.Tasks.Ritual.Install.Ci do
 
   defp install_mise_style(igniter) do
     igniter
-    |> include_or_create_plain_file(@ci_workflow, Ci.mise_ci())
-    |> include_or_create_plain_file(@setup_action, Ci.mise_setup_action())
+    |> write_or_create_plain_file(@ci_workflow, Ci.mise_ci(), @ci_workflow)
+    |> write_or_create_plain_file(@setup_action, Ci.mise_setup_action(), @setup_action)
   end
 
   defp install_setup_beam_style(igniter) do
-    include_or_create_plain_file(igniter, @ci_workflow, Ci.setup_beam_ci())
+    write_or_create_plain_file(igniter, @ci_workflow, Ci.setup_beam_ci(), @ci_workflow)
   end
 end

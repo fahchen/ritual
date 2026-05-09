@@ -20,6 +20,22 @@ defmodule Ritual.IgniterTestHelper do
   def test_project(opts \\ []), do: Igniter.Test.test_project(opts)
 
   @doc """
+  Pre-populates the `--force` flag in `igniter.args.options`.
+
+  When a task's `igniter/1` callback is invoked directly (as opposed to
+  via `Mix.Task.run/2` or `Igniter.compose_task/3`), no argv parsing
+  happens — flags must be injected manually. Mirrors the
+  `with_tool_versions_flag/1` pattern used in toolchain/install tests.
+  """
+  @spec with_force_flag(Igniter.t()) :: Igniter.t()
+  def with_force_flag(%Igniter{} = igniter) do
+    args = igniter.args || %Igniter.Mix.Task.Args{}
+    options = Keyword.put(args.options, :force, true)
+    argv_flags = ["--force" | args.argv_flags]
+    %{igniter | args: %{args | options: options, argv_flags: argv_flags}}
+  end
+
+  @doc """
   Returns the simulated content of `path` after applying `igniter`.
 
   Useful when an assertion needs to inspect the final file contents instead

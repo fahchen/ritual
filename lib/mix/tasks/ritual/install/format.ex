@@ -43,8 +43,8 @@ defmodule Mix.Tasks.Ritual.Install.Format do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.format",
-      schema: [],
-      defaults: [],
+      schema: [force: :boolean],
+      defaults: [force: false],
       composes: []
     }
   end

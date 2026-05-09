@@ -195,6 +195,23 @@ defmodule Mix.Tasks.Ritual.Install.FormatTest do
     end
   end
 
+  describe "--force flag" do
+    test "regenerates `.formatter.exs` from the default template, clobbering custom content" do
+      sentinel = "# hand-written formatter — do not touch\n[inputs: [\"mix.exs\"]]\n"
+
+      igniter =
+        test_project(files: %{".formatter.exs" => sentinel})
+        |> with_force_flag()
+        |> Format.igniter()
+
+      content = file_content(igniter, ".formatter.exs")
+
+      refute content == sentinel
+      # Default Mix-generated `.formatter.exs` shape.
+      assert content =~ ~s|inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"]|
+    end
+  end
+
   # Asserts that running the format task twice on the given project produces
   # the same `.formatter.exs` content as running it once. We can't use
   # `assert_unchanged/2` here because the rewrite source baseline is the

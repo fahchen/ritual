@@ -32,7 +32,7 @@ defmodule Mix.Tasks.Ritual.Install.Publish do
 
   use Igniter.Mix.Task
 
-  import Ritual.IgniterCompat, only: [include_or_create_plain_file: 3]
+  import Ritual.IgniterCompat, only: [write_or_create_plain_file: 4]
 
   alias Ritual.Ci
   alias Ritual.Detect
@@ -44,8 +44,8 @@ defmodule Mix.Tasks.Ritual.Install.Publish do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.publish",
-      schema: [],
-      defaults: [],
+      schema: [force: :boolean],
+      defaults: [force: false],
       composes: []
     }
   end
@@ -53,7 +53,12 @@ defmodule Mix.Tasks.Ritual.Install.Publish do
   @impl Igniter.Mix.Task
   def igniter(igniter) do
     if Detect.hex_package?(igniter) do
-      include_or_create_plain_file(igniter, @publish_workflow, Ci.publish_workflow())
+      write_or_create_plain_file(
+        igniter,
+        @publish_workflow,
+        Ci.publish_workflow(),
+        @publish_workflow
+      )
     else
       Igniter.add_notice(
         igniter,

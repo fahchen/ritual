@@ -141,6 +141,23 @@ defmodule Mix.Tasks.Ritual.Install.CredoTest do
     end
   end
 
+  describe "--force flag" do
+    test "regenerates `.credo.exs` from the template, clobbering an existing file" do
+      sentinel = "# user-authored credo config — do not touch\n[]\n"
+
+      igniter =
+        test_project(files: %{".credo.exs" => sentinel})
+        |> with_force_flag()
+        |> CredoTask.igniter()
+
+      content = file_content(igniter, ".credo.exs")
+
+      refute content == sentinel
+      assert content =~ "checks:"
+      assert content =~ "Credo.Check.Readability.MaxLineLength"
+    end
+  end
+
   describe "preexisting `:credo` dep" do
     test "leaves an existing credo declaration in place (does not duplicate)" do
       igniter =

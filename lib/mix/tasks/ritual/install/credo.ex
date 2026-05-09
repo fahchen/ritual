@@ -38,8 +38,8 @@ defmodule Mix.Tasks.Ritual.Install.Credo do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.credo",
-      schema: [],
-      defaults: [],
+      schema: [force: :boolean],
+      defaults: [force: false],
       composes: []
     }
   end
@@ -70,11 +70,15 @@ defmodule Mix.Tasks.Ritual.Install.Credo do
     source = Application.app_dir(:ritual, ["priv", "templates", "credo", template])
     contents = EEx.eval_file(source, assigns: [])
 
-    # `include_or_create_file` preserves any user-authored `.credo.exs` (read
-    # from disk or, in test mode, from the test fixture) and only writes the
-    # template when no file exists. Idempotent. A corrupt or zero-byte
-    # pre-existing file is left in place; users wanting a clean regenerate
-    # should delete `.credo.exs` and re-run.
-    Igniter.include_or_create_file(igniter, ".credo.exs", contents)
+    # Default behaviour preserves any user-authored `.credo.exs` (read from
+    # disk or, in test mode, from the test fixture). With `--force` (or an
+    # interactive `y` to the overwrite prompt) the file is regenerated from
+    # the template. Idempotent in either branch.
+    Ritual.IgniterCompat.write_or_create_elixir_file(
+      igniter,
+      ".credo.exs",
+      contents,
+      ".credo.exs"
+    )
   end
 end

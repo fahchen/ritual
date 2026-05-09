@@ -45,7 +45,12 @@ defmodule Ritual.Formatter do
   """
   @spec ensure_present(Igniter.t()) :: Igniter.t()
   def ensure_present(igniter) do
-    Igniter.include_or_create_file(igniter, ".formatter.exs", @default_formatter)
+    Ritual.IgniterCompat.write_or_create_elixir_file(
+      igniter,
+      ".formatter.exs",
+      @default_formatter,
+      ".formatter.exs"
+    )
   end
 
   @doc """

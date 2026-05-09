@@ -58,8 +58,8 @@ defmodule Mix.Tasks.Ritual.Install do
       # OptionParser run accepts it; the merged sub-task schema would let it
       # through too, but listing it explicitly keeps the contract obvious in
       # `mix help ritual.install`.
-      schema: [tool_versions: :boolean],
-      defaults: [tool_versions: false],
+      schema: [tool_versions: :boolean, force: :boolean],
+      defaults: [tool_versions: false, force: false],
       composes: [
         "ritual.install.format",
         "ritual.install.toolchain",

@@ -123,6 +123,43 @@ defmodule Mix.Tasks.Ritual.Install.DialyzerTest do
     end
   end
 
+  describe "--force flag" do
+    test "replaces an existing `dialyzer:` keyword with the canonical block" do
+      igniter =
+        project_with_existing_dialyzer()
+        |> with_force_flag()
+        |> DialyzerTask.igniter()
+
+      content = file_content(igniter, "mix.exs")
+
+      # Custom values from the fixture must be gone after the overwrite.
+      refute content =~ ~s|plt_local_path: "priv/plts/custom.plt"|
+      refute content =~ ":phoenix_test"
+      refute content =~ ~s|ignore_warnings: "config/custom_ignore.exs"|
+
+      # Canonical block has replaced them — PLT path derives from `:app`.
+      assert content =~ ~s|plt_local_path: "priv/plts/my_app.plt"|
+      assert content =~ ~s|plt_core_path: "priv/plts/core.plt"|
+      assert content =~ "plt_add_apps: [:ex_unit, :mix]"
+      assert content =~ ~s|ignore_warnings: ".dialyzer_ignore.exs"|
+    end
+
+    test "regenerates `.dialyzer_ignore.exs` from the template" do
+      sentinel = "# user-authored ignore list — do not touch\n[~r/foo/]\n"
+
+      igniter =
+        test_project(files: %{".dialyzer_ignore.exs" => sentinel})
+        |> with_force_flag()
+        |> DialyzerTask.igniter()
+
+      content = file_content(igniter, ".dialyzer_ignore.exs")
+
+      refute content == sentinel
+      assert content =~ "Add false-positive Dialyzer warnings here"
+      assert {[], _bindings} = Code.eval_string(content)
+    end
+  end
+
   # --- helpers ---
 
   defp snapshot(igniter) do

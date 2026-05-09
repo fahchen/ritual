@@ -96,6 +96,26 @@ defmodule Mix.Tasks.Ritual.Install.PublishTest do
     end
   end
 
+  describe "--force flag" do
+    test "overwrites an existing publish.yml" do
+      sentinel = "# stale publish workflow\nname: hand-rolled\n"
+
+      igniter =
+        test_project(
+          app_name: :my_lib,
+          files: Map.merge(hex_package_files(), %{@publish_workflow => sentinel})
+        )
+        |> with_force_flag()
+        |> PublishTask.igniter()
+
+      content = file_content(igniter, @publish_workflow)
+
+      refute content == sentinel
+      assert content =~ "name: Publish"
+      assert content =~ "mix hex.publish --yes"
+    end
+  end
+
   # --- fixtures ---
 
   defp hex_package_project do

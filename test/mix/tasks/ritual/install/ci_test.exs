@@ -139,6 +139,38 @@ defmodule Mix.Tasks.Ritual.Install.CiTest do
     end
   end
 
+  describe "--force flag" do
+    test "overwrites an existing `ci.yml` (mise style)" do
+      sentinel = "# stale CI workflow\nname: hand-rolled\n"
+
+      igniter =
+        test_project(files: %{@ci_workflow => sentinel})
+        |> with_force_flag()
+        |> CiTask.igniter()
+
+      content = file_content(igniter, @ci_workflow)
+
+      refute content == sentinel
+      assert content =~ "name: CI"
+      assert content =~ "uses: ./.github/workflows/actions/setup"
+    end
+
+    test "overwrites an existing composite setup action" do
+      sentinel = "# stale composite action\nname: hand-rolled\n"
+
+      igniter =
+        test_project(files: %{@setup_action => sentinel})
+        |> with_force_flag()
+        |> CiTask.igniter()
+
+      content = file_content(igniter, @setup_action)
+
+      refute content == sentinel
+      assert content =~ "using: composite"
+      assert content =~ "jdx/mise-action"
+    end
+  end
+
   # --- helpers ---
 
   defp snapshot(igniter) do

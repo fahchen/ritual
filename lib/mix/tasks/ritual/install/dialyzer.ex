@@ -34,8 +34,8 @@ defmodule Mix.Tasks.Ritual.Install.Dialyzer do
     %Igniter.Mix.Task.Info{
       group: :ritual,
       example: "mix ritual.install.dialyzer",
-      schema: [],
-      defaults: [],
+      schema: [force: :boolean],
+      defaults: [force: false],
       composes: []
     }
   end
@@ -58,38 +58,52 @@ defmodule Mix.Tasks.Ritual.Install.Dialyzer do
 
   defp configure_dialyzer(igniter) do
     plt_name = plt_name(igniter)
+    canonical = canonical_dialyzer_block(plt_name)
 
     # Set the whole `:dialyzer` keyword in one shot. The updater receives
-    # `nil` if the key is absent (we materialise the default block) or a
-    # zipper at the existing value (we hand it back unchanged). Setting
-    # individual sub-keys would silently fill in any user-omitted entry —
-    # see Phase 6 findings entry on preserving the exact user shape.
+    # `nil` if the key is absent (we materialise the canonical block) or a
+    # zipper at the existing value. With overwrite confirmation we replace
+    # the existing value with the canonical block; otherwise we hand the
+    # zipper back unchanged so the user's customisations survive verbatim.
     Igniter.Project.MixProject.update(igniter, :project, [:dialyzer], fn
       nil ->
-        {:ok,
-         {:code,
-          quote do
-            [
-              plt_local_path: unquote("priv/plts/#{plt_name}.plt"),
-              plt_core_path: "priv/plts/core.plt",
-              plt_add_apps: [:ex_unit, :mix],
-              ignore_warnings: ".dialyzer_ignore.exs"
-            ]
-          end}}
+        {:ok, {:code, canonical}}
 
       zipper ->
-        {:ok, zipper}
+        if Ritual.Overwrite.prompt?(igniter, "dialyzer keyword in mix.exs") do
+          {:ok, {:code, canonical}}
+        else
+          {:ok, zipper}
+        end
     end)
+  end
+
+  # Built outside the closure (which would re-evaluate `quote` per-call) and
+  # passed in by reference. The `unquote(...)` interpolates the per-project
+  # PLT path so the canonical block is concrete Elixir AST, not a template.
+  defp canonical_dialyzer_block(plt_name) do
+    quote do
+      [
+        plt_local_path: unquote("priv/plts/#{plt_name}.plt"),
+        plt_core_path: "priv/plts/core.plt",
+        plt_add_apps: [:ex_unit, :mix],
+        ignore_warnings: ".dialyzer_ignore.exs"
+      ]
+    end
   end
 
   defp write_ignore_file(igniter) do
     source = Application.app_dir(:ritual, ["priv", "templates", "dialyzer", "ignore.exs"])
     contents = File.read!(source)
 
-    # `include_or_create_file` preserves any user-authored
-    # `.dialyzer_ignore.exs` (read from disk or, in test mode, from the test
-    # fixture) and only writes the template when no file exists. Idempotent.
-    Igniter.include_or_create_file(igniter, ".dialyzer_ignore.exs", contents)
+    # Default preserves any user-authored `.dialyzer_ignore.exs`; `--force`
+    # (or an interactive `y` answer) regenerates it from the template.
+    Ritual.IgniterCompat.write_or_create_elixir_file(
+      igniter,
+      ".dialyzer_ignore.exs",
+      contents,
+      ".dialyzer_ignore.exs"
+    )
   end
 
   # Umbrella `mix.exs` files commonly omit `:app`, in which case

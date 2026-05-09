@@ -45,4 +45,62 @@ defmodule Ritual.IgniterCompat do
       %{igniter | rewrite: Rewrite.put!(igniter.rewrite, source)}
     end
   end
+
+  @doc """
+  Variant of `Igniter.include_or_create_file/3` that prompts (via
+  `Ritual.Overwrite.prompt?/2`) before clobbering an existing Elixir
+  source file.
+
+    * No existing file: writes the rendered contents (delegates to
+      `Igniter.include_or_create_file/3`).
+    * Existing file + prompt rejected (default): preserves verbatim
+      (delegates to `Igniter.include_or_create_file/3`).
+    * Existing file + prompt accepted (`--force` or interactive `y`):
+      overwrites via `Igniter.create_new_file/4` with `on_exists: :overwrite`.
+  """
+  @spec write_or_create_elixir_file(Igniter.t(), Path.t(), String.t(), String.t()) :: Igniter.t()
+  def write_or_create_elixir_file(igniter, path, contents, label) do
+    on_disk_or_in_rewrite? =
+      Rewrite.has_source?(igniter.rewrite, path) or Igniter.exists?(igniter, path)
+
+    if on_disk_or_in_rewrite? and Ritual.Overwrite.prompt?(igniter, label) do
+      Igniter.create_new_file(igniter, path, contents, on_exists: :overwrite)
+    else
+      Igniter.include_or_create_file(igniter, path, contents)
+    end
+  end
+
+  @doc """
+  Variant of `include_or_create_plain_file/3` that prompts (via
+  `Ritual.Overwrite.prompt?/2`) before clobbering an existing plain file.
+
+    * No existing source: behaves like `include_or_create_plain_file/3`
+      and writes the rendered contents.
+    * Existing source + prompt rejected (default): preserves the existing
+      content verbatim — same as the upstream helper today.
+    * Existing source + prompt accepted (`--force` or interactive `y`):
+      replaces the source contents with `contents`.
+
+  The replace path mutates the existing source in place rather than
+  creating a fresh one so any other source metadata Igniter tracks
+  (e.g. owner-of-creation, formatter hints) survives.
+  """
+  @spec write_or_create_plain_file(Igniter.t(), Path.t(), String.t(), String.t()) :: Igniter.t()
+  def write_or_create_plain_file(igniter, path, contents, label) do
+    igniter = Igniter.include_existing_file(igniter, path)
+
+    cond do
+      not Rewrite.has_source?(igniter.rewrite, path) ->
+        source = Rewrite.Source.from_string(contents, path: path)
+        %{igniter | rewrite: Rewrite.put!(igniter.rewrite, source)}
+
+      Ritual.Overwrite.prompt?(igniter, label) ->
+        source = Rewrite.source!(igniter.rewrite, path)
+        source = Rewrite.Source.update(source, :content, contents)
+        %{igniter | rewrite: Rewrite.update!(igniter.rewrite, source)}
+
+      true ->
+        igniter
+    end
+  end
 end

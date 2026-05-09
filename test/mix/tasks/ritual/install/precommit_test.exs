@@ -205,6 +205,56 @@ defmodule Mix.Tasks.Ritual.Install.PrecommitTest do
     end
   end
 
+  describe "--force flag" do
+    test "replaces a divergent existing precommit alias with the canonical steps" do
+      igniter =
+        project_with_existing_precommit()
+        |> with_force_flag()
+        |> PrecommitTask.igniter()
+
+      content = file_content(igniter, "mix.exs")
+
+      # Stale alias steps are gone; canonical (no credo, no dialyxir in this
+      # fixture) ones are now present.
+      refute content =~ ~s|precommit: ["format", "test"]|
+      assert content =~ "compile --warnings-as-errors"
+      assert content =~ "deps.unlock --unused"
+      assert content =~ ~s|"format"|
+      assert content =~ ~s|"test"|
+
+      # Tooling-specific steps stay omitted because the fixture has neither
+      # :credo nor :dialyxir declared.
+      refute content =~ "credo --strict"
+      refute content =~ ~s|"dialyzer"|
+    end
+
+    test "does NOT emit the canonical notice after a forced overwrite" do
+      igniter =
+        project_with_existing_precommit()
+        |> with_force_flag()
+        |> PrecommitTask.igniter()
+
+      refute Enum.any?(igniter.notices, fn notice ->
+               notice =~ "precommit" and notice =~ "canonical"
+             end)
+    end
+
+    test "is a no-op when the existing alias already matches canonical" do
+      after_force =
+        project_with_canonical_precommit()
+        |> with_force_flag()
+        |> PrecommitTask.igniter()
+        |> file_content("mix.exs")
+
+      after_default =
+        project_with_canonical_precommit()
+        |> PrecommitTask.igniter()
+        |> file_content("mix.exs")
+
+      assert after_force == after_default
+    end
+  end
+
   # --- fixtures ---
 
   defp library_project(opts \\ []) do
