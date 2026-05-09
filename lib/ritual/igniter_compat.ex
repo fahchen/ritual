@@ -41,9 +41,21 @@ defmodule Ritual.IgniterCompat do
     if Rewrite.has_source?(igniter.rewrite, path) do
       igniter
     else
-      source = Rewrite.Source.from_string(contents, path: path)
-      %{igniter | rewrite: Rewrite.put!(igniter.rewrite, source)}
+      %{igniter | rewrite: Rewrite.put!(igniter.rewrite, fresh_plain_source(igniter, path, contents))}
     end
+  end
+
+  # `Rewrite.Source.from_string/2` alone produces a source with
+  # `updated?: false`, so Igniter's write phase treats it as untouched and
+  # never persists it to disk (in-memory tests still observed the contents,
+  # which is why this regression slipped through). Routing through
+  # `Igniter.update_source/5` with `by: :file_creator` mirrors the upstream
+  # `Igniter.create_new_file/4` create branch and marks the source dirty so
+  # it actually lands on disk on apply.
+  defp fresh_plain_source(igniter, path, contents) do
+    ""
+    |> Rewrite.Source.from_string(path: path)
+    |> Igniter.update_source(igniter, :content, contents, by: :file_creator)
   end
 
   @doc """
@@ -91,12 +103,14 @@ defmodule Ritual.IgniterCompat do
 
     cond do
       not Rewrite.has_source?(igniter.rewrite, path) ->
-        source = Rewrite.Source.from_string(contents, path: path)
-        %{igniter | rewrite: Rewrite.put!(igniter.rewrite, source)}
+        %{igniter | rewrite: Rewrite.put!(igniter.rewrite, fresh_plain_source(igniter, path, contents))}
 
       Ritual.Overwrite.prompt?(igniter, label) ->
-        source = Rewrite.source!(igniter.rewrite, path)
-        source = Rewrite.Source.update(source, :content, contents)
+        source =
+          igniter.rewrite
+          |> Rewrite.source!(path)
+          |> Igniter.update_source(igniter, :content, contents, by: :file_creator)
+
         %{igniter | rewrite: Rewrite.update!(igniter.rewrite, source)}
 
       true ->
