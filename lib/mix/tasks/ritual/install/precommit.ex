@@ -91,12 +91,23 @@ defmodule Mix.Tasks.Ritual.Install.Precommit do
     # Capture pre-existence of the alias *before* we mutate `mix.exs`. Igniter's
     # `add_alias/3` with `if_exists: :ignore` returns the same igniter regardless
     # of whether it modified the AST, so we can't infer presence after the fact.
-    alias_existed? = precommit_alias_present?(igniter)
+    notice? = needs_canonical_notice?(igniter)
 
     igniter
     |> add_precommit_alias()
     |> set_preferred_env()
-    |> maybe_notice(alias_existed?, @canonical_alias_notice)
+    |> maybe_notice(notice?, @canonical_alias_notice)
+  end
+
+  # Notice fires only when an existing alias diverges from the canonical
+  # shape. If the alias already matches what we would write, suppress the
+  # reminder — re-runs of an already-Ritualised project should stay quiet.
+  defp needs_canonical_notice?(igniter) do
+    case existing_precommit_steps(igniter) do
+      :absent -> false
+      {:ok, steps} -> steps != canonical_steps(igniter)
+      :error -> true
+    end
   end
 
   defp add_precommit_alias(igniter) do
@@ -139,12 +150,46 @@ defmodule Mix.Tasks.Ritual.Install.Precommit do
       ["test"]
   end
 
-  # Returns `true` if `mix.exs` already declares a `:precommit` key inside
-  # `aliases/0` (or the inline `aliases:` keyword on `project/0`).
-  defp precommit_alias_present?(igniter) do
-    case aliases_zipper(igniter) do
-      {:ok, zipper} -> match?({:ok, _}, IKeyword.get_key(zipper, :precommit))
-      :error -> false
+  # Reads existing `precommit:` alias steps as a list of strings.
+  # Returns `:absent` when no alias is declared, `{:ok, steps}` when the alias
+  # is a literal list of strings, and `:error` otherwise (non-list value or
+  # non-literal entries we cannot statically compare).
+  defp existing_precommit_steps(igniter) do
+    with {:ok, zipper} <- aliases_zipper(igniter),
+         {:ok, zipper} <- IKeyword.get_key(zipper, :precommit) do
+      eval_string_list(zipper.node)
+    else
+      :error -> :absent
+    end
+  end
+
+  # Sourceror wraps literals as `{:__block__, meta, [literal]}` to preserve
+  # formatting; unwrap before comparing. Anything non-literal (function call,
+  # variable, atom, etc.) bails out so we keep the notice — we cannot tell
+  # whether such an alias already matches canonical.
+  defp eval_string_list(ast) do
+    with {:ok, list} <- unwrap_block(ast) |> ensure_list(),
+         {:ok, strings} <- collect_strings(list) do
+      {:ok, strings}
+    end
+  end
+
+  defp unwrap_block({:__block__, _, [inner]}), do: inner
+  defp unwrap_block(other), do: other
+
+  defp ensure_list(list) when is_list(list), do: {:ok, list}
+  defp ensure_list(_), do: :error
+
+  defp collect_strings(list) do
+    Enum.reduce_while(list, {:ok, []}, fn item, {:ok, acc} ->
+      case unwrap_block(item) do
+        bin when is_binary(bin) -> {:cont, {:ok, [bin | acc]}}
+        _ -> {:halt, :error}
+      end
+    end)
+    |> case do
+      {:ok, acc} -> {:ok, Enum.reverse(acc)}
+      :error -> :error
     end
   end
 

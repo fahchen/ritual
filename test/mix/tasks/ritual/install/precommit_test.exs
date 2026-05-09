@@ -134,6 +134,14 @@ defmodule Mix.Tasks.Ritual.Install.PrecommitTest do
                notice =~ "precommit" and notice =~ "canonical"
              end)
     end
+
+    test "does NOT emit the notice when existing alias already matches canonical" do
+      igniter = project_with_canonical_precommit() |> PrecommitTask.igniter()
+
+      refute Enum.any?(igniter.notices, fn notice ->
+               notice =~ "precommit" and notice =~ "canonical"
+             end)
+    end
   end
 
   describe "preexisting `cli/0` with other `preferred_envs`" do
@@ -228,6 +236,46 @@ defmodule Mix.Tasks.Ritual.Install.PrecommitTest do
           defp deps do
             [
               #{deps_src}
+            ]
+          end
+        end
+        """
+      }
+    )
+  end
+
+  defp project_with_canonical_precommit do
+    test_project(
+      app_name: :my_app,
+      files: %{
+        "mix.exs" => """
+        defmodule MyApp.MixProject do
+          use Mix.Project
+
+          def project do
+            [
+              app: :my_app,
+              version: "0.1.0",
+              elixir: "~> 1.17",
+              deps: deps(),
+              aliases: aliases()
+            ]
+          end
+
+          def application, do: [extra_applications: [:logger]]
+
+          defp deps do
+            []
+          end
+
+          defp aliases do
+            [
+              precommit: [
+                "compile --warnings-as-errors",
+                "deps.unlock --unused",
+                "format",
+                "test"
+              ]
             ]
           end
         end
