@@ -18,9 +18,13 @@ defmodule Mix.Tasks.Ritual.Install.Dialyzer do
       survive verbatim.
     * Creates `.dialyzer_ignore.exs` at the project root with a documented
       empty list. An existing `.dialyzer_ignore.exs` is left untouched.
+    * Appends `/priv/plts/*.plt` and `/priv/plts/*.plt.hash` to an existing
+      `.gitignore` (line-exact check; existing entries are preserved). If
+      the project has no `.gitignore`, this step is a no-op — Ritual does
+      not create one.
 
-  All three steps are idempotent — running the task twice produces the same
-  `mix.exs` and `.dialyzer_ignore.exs` as running it once.
+  All four steps are idempotent — running the task twice produces the same
+  `mix.exs`, `.dialyzer_ignore.exs`, and `.gitignore` as running it once.
   """
 
   use Igniter.Mix.Task
@@ -46,6 +50,14 @@ defmodule Mix.Tasks.Ritual.Install.Dialyzer do
     |> add_dialyxir_dep()
     |> configure_dialyzer()
     |> write_ignore_file()
+    |> ensure_plt_gitignore()
+  end
+
+  defp ensure_plt_gitignore(igniter) do
+    Ritual.IgniterCompat.ensure_gitignore_lines(igniter, [
+      "/priv/plts/*.plt",
+      "/priv/plts/*.plt.hash"
+    ])
   end
 
   defp add_dialyxir_dep(igniter) do

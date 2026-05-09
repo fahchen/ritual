@@ -117,4 +117,66 @@ defmodule Ritual.IgniterCompat do
         igniter
     end
   end
+
+  @doc """
+  Appends missing lines to an existing `.gitignore`.
+
+    * If `.gitignore` does not exist on disk (or in the rewrite),
+      returns the igniter unchanged — we never create a `.gitignore`
+      on a project that opted out of one.
+    * For each requested line, appends only when an exact line match is
+      not already present. Comparison is line-exact (whitespace and
+      leading slash sensitive), so `/priv/plts/*.plt` and
+      `priv/plts/*.plt` are treated as distinct entries.
+    * The original trailing newline shape is preserved when one was
+      already present; otherwise a single newline is added before the
+      first appended line so the file remains POSIX-clean.
+
+  Marks the source as updated via `Igniter.update_source/5` so the
+  apply phase actually writes the change to disk.
+  """
+  @spec ensure_gitignore_lines(Igniter.t(), [String.t()]) :: Igniter.t()
+  def ensure_gitignore_lines(igniter, lines) when is_list(lines) do
+    path = ".gitignore"
+    igniter = Igniter.include_existing_file(igniter, path)
+
+    case Rewrite.source(igniter.rewrite, path) do
+      :error ->
+        igniter
+
+      {:ok, source} ->
+        content = Rewrite.Source.get(source, :content)
+        missing = Enum.reject(lines, &gitignore_line_present?(content, &1))
+
+        if missing == [] do
+          igniter
+        else
+          new_content = append_gitignore_lines(content, missing)
+
+          source =
+            Igniter.update_source(source, igniter, :content, new_content,
+              by: :ritual_gitignore
+            )
+
+          %{igniter | rewrite: Rewrite.update!(igniter.rewrite, source)}
+        end
+    end
+  end
+
+  defp gitignore_line_present?(content, line) do
+    content
+    |> String.split("\n")
+    |> Enum.any?(&(&1 == line))
+  end
+
+  defp append_gitignore_lines(content, lines) do
+    base =
+      cond do
+        content == "" -> ""
+        String.ends_with?(content, "\n") -> content
+        true -> content <> "\n"
+      end
+
+    base <> Enum.map_join(lines, "\n", & &1) <> "\n"
+  end
 end

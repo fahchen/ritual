@@ -21,6 +21,50 @@ defmodule Ritual.IgniterCompatTest do
     end
   end
 
+  describe "ensure_gitignore_lines/2" do
+    test "appends missing lines to an existing .gitignore" do
+      igniter =
+        test_project(files: %{".gitignore" => "/_build/\n/deps/\n"})
+        |> IgniterCompat.ensure_gitignore_lines([
+          "/priv/plts/*.plt",
+          "/priv/plts/*.plt.hash"
+        ])
+
+      content = file_content(igniter, ".gitignore")
+      assert content =~ "/priv/plts/*.plt\n"
+      assert content =~ "/priv/plts/*.plt.hash\n"
+      # Existing lines preserved verbatim, original ordering kept.
+      assert String.starts_with?(content, "/_build/\n/deps/\n")
+    end
+
+    test "is idempotent — re-running does not append duplicates" do
+      project = test_project(files: %{".gitignore" => "/_build/\n"})
+      lines = ["/priv/plts/*.plt"]
+
+      after_first =
+        project
+        |> IgniterCompat.ensure_gitignore_lines(lines)
+        |> file_content(".gitignore")
+
+      after_second =
+        project
+        |> IgniterCompat.ensure_gitignore_lines(lines)
+        |> IgniterCompat.ensure_gitignore_lines(lines)
+        |> file_content(".gitignore")
+
+      assert after_first == after_second
+    end
+
+    test "ensures a trailing newline when the original file lacked one" do
+      igniter =
+        test_project(files: %{".gitignore" => "/_build/"})
+        |> IgniterCompat.ensure_gitignore_lines(["/priv/plts/*.plt"])
+
+      content = file_content(igniter, ".gitignore")
+      assert content == "/_build/\n/priv/plts/*.plt\n"
+    end
+  end
+
   describe "write_or_create_plain_file/4" do
     test "marks the freshly created source as updated" do
       igniter =

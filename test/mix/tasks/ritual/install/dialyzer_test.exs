@@ -111,6 +111,47 @@ defmodule Mix.Tasks.Ritual.Install.DialyzerTest do
     end
   end
 
+  describe ".gitignore PLT entries" do
+    test "appends /priv/plts/*.plt and /priv/plts/*.plt.hash to existing .gitignore" do
+      igniter =
+        test_project(files: %{".gitignore" => "/_build/\n/deps/\n"})
+        |> DialyzerTask.igniter()
+
+      content = file_content(igniter, ".gitignore")
+
+      assert content =~ "/priv/plts/*.plt\n"
+      assert content =~ "/priv/plts/*.plt.hash\n"
+      assert String.starts_with?(content, "/_build/\n/deps/\n")
+    end
+
+    test "is idempotent — re-running does not duplicate PLT lines" do
+      project = test_project(files: %{".gitignore" => "/_build/\n"})
+
+      after_first = project |> DialyzerTask.igniter() |> file_content(".gitignore")
+
+      after_second =
+        project
+        |> DialyzerTask.igniter()
+        |> DialyzerTask.igniter()
+        |> file_content(".gitignore")
+
+      assert after_first == after_second
+    end
+
+    test "preserves a pre-existing /priv/plts/*.plt entry without duplicating" do
+      igniter =
+        test_project(files: %{".gitignore" => "/_build/\n/priv/plts/*.plt\n"})
+        |> DialyzerTask.igniter()
+
+      content = file_content(igniter, ".gitignore")
+      occurrences = content |> String.split("/priv/plts/*.plt\n") |> length()
+
+      # `length(parts) - 1` == number of separator hits.
+      assert occurrences - 1 == 1
+      assert content =~ "/priv/plts/*.plt.hash\n"
+    end
+  end
+
   describe "preexisting `.dialyzer_ignore.exs`" do
     test "does NOT overwrite an existing ignore file" do
       sentinel = "# user-authored ignore list — do not touch\n[~r/foo/]\n"
