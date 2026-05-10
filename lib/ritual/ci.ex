@@ -53,7 +53,7 @@ defmodule Ritual.Ci do
 
       steps:
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v5
 
         - name: Setup environment
           id: setup
@@ -73,7 +73,7 @@ defmodule Ritual.Ci do
 
         - name: Restore PLT cache
           id: plt-cache
-          uses: actions/cache@v4
+          uses: actions/cache@v5
           with:
             path: priv/plts
             key: plt-${{ runner.os }}-${{ steps.setup.outputs.erlang-version }}-${{ steps.setup.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
@@ -107,7 +107,7 @@ defmodule Ritual.Ci do
     using: composite
     steps:
       - name: Install tools via mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v4
         with:
           install: true
           cache: true
@@ -136,7 +136,7 @@ defmodule Ritual.Ci do
 
       - name: Restore Mix dependencies
         id: mix-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             deps
@@ -186,7 +186,7 @@ defmodule Ritual.Ci do
             - elixir: "1.17.3"
               otp: "27.2"
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
 
         - name: Install Elixir and Erlang
           uses: erlef/setup-beam@v1
@@ -195,7 +195,7 @@ defmodule Ritual.Ci do
             otp-version: ${{ matrix.otp }}
 
         - name: Restore deps and _build cache
-          uses: actions/cache@v4
+          uses: actions/cache@v5
           with:
             path: |
               deps
@@ -228,7 +228,7 @@ defmodule Ritual.Ci do
 
         - name: Restore PLT cache
           id: plt-cache
-          uses: actions/cache@v4
+          uses: actions/cache@v5
           if: ${{ matrix.lint }}
           with:
             path: priv/plts
@@ -280,7 +280,7 @@ defmodule Ritual.Ci do
     publish:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
 
         - name: Install Elixir and Erlang
           uses: erlef/setup-beam@v1

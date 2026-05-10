@@ -20,7 +20,7 @@ defmodule Mix.Tasks.Ritual.Install.PublishTest do
       assert content =~ "v*"
 
       # Inlined setup-beam steps (Option B — self-contained, no composite ref).
-      assert content =~ "actions/checkout@v4"
+      assert content =~ "actions/checkout@v5"
       assert content =~ "erlef/setup-beam@v1"
       assert content =~ "elixir-version:"
       assert content =~ "otp-version:"
