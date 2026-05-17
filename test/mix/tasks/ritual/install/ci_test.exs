@@ -19,6 +19,7 @@ defmodule Mix.Tasks.Ritual.Install.CiTest do
       assert content =~ "MIX_ENV: test"
 
       # Single job uses the local composite setup action — the mise-style hallmark.
+      assert content =~ "actions/checkout@v6"
       assert content =~ "uses: ./.github/workflows/actions/setup"
 
       # Sequential lint + test pipeline.
@@ -82,6 +83,7 @@ defmodule Mix.Tasks.Ritual.Install.CiTest do
 
       assert content =~ "name: CI"
       assert content =~ "erlef/setup-beam"
+      assert content =~ "actions/checkout@v6"
       assert content =~ "matrix:"
       assert content =~ "include:"
       assert content =~ "elixir:"

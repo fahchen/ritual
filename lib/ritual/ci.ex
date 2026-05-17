@@ -53,7 +53,7 @@ defmodule Ritual.Ci do
 
       steps:
         - name: Checkout
-          uses: actions/checkout@v5
+          uses: actions/checkout@v6
 
         - name: Setup environment
           id: setup
@@ -186,7 +186,7 @@ defmodule Ritual.Ci do
             - elixir: "1.17.3"
               otp: "27.2"
       steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v6
 
         - name: Install Elixir and Erlang
           uses: erlef/setup-beam@v1
@@ -280,7 +280,7 @@ defmodule Ritual.Ci do
     publish:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v6
 
         - name: Install Elixir and Erlang
           uses: erlef/setup-beam@v1
